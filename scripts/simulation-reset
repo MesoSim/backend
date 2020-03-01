@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+# Copyright (c) 2020 MesoSim Developers.
+# Distributed under the terms of the Apache 2.0 License.
+# SPDX-License-Identifier: Apache-2.0
+"""
+Reset the chase simulation backend
+----------------------------------
+
+Clear timing from control DB, clear the output warning and radar folders,
+and reset warning.db and radar.db to be unprocessed.
+"""
+
+# Imports
+import argparse
+import os
+from sqlite3 import dbapi2 as sql
+
+from mesosim.core.config import Config
+
+# Set up script configuration
+parser = argparse.ArgumentParser(description="Reset the simulation.", usage=argparse.SUPPRESS)
+
+parser.add_argument(
+    "-D",
+    "--deploy-dir",
+    help="<Required> Deployment (web) directory",
+    required=True,
+    metavar="/var/www/l2data/",
+)
+parser.add_argument(
+    "-W",
+    "--warning-dir",
+    help="<Required> Warning (web) directory",
+    required=True,
+    metavar="/var/www/warnings/",
+)
+parser.add_argument(
+    "-r", "--radar-db", help="Radar database file", default="radar.db", metavar="radar.db"
+)
+parser.add_argument(
+    "-w",
+    "--warning-db",
+    help="Warning database file",
+    default="warning.db",
+    metavar="warning.db",
+)
+parser.add_argument(
+    "-c",
+    "--config-db",
+    help="Config/control database file",
+    default="config.db",
+    metavar="config.db",
+)
+
+try:
+    args = parser.parse_args()
+except SystemExit:
+    parser.print_help()
+    raise
+
+# Greetings!
+print("\nRESET!\n------\n")
+
+# Establish DB connection
+warn_con = sql.connect(args.warning_db)
+warn_cur = warn_con.cursor()
+rad_con = sql.connect(args.radar_db)
+rad_cur = rad_con.cursor()
+config = Config(args.config_db)
+
+# Get sites
+rad_cur.execute("SELECT site from scans GROUP BY site")
+sites = [site[0] for site in rad_cur.fetchall()]
+
+# Confirm
+confirm = input("[Y]es/[N]o: ")
+
+if confirm[0] in ["Y", "y"]:
+
+    # Clear timings
+    config.cur.execute(
+        "UPDATE config SET config_value = NULL WHERE config_setting IN ('cur_start_time',"
+        "'arc_start_time', 'speed_factor')"
+    )
+    config.cur.execute(
+        "UPDATE config SET config_value = 0 WHERE config_setting = 'simulation_running'"
+    )
+    config.con.commit()
+
+    # Clear folders
+    folders = [args.warning_dir]
+    for site in sites:
+        folders.append(args.deploy_dir + site + "/")
+
+    for folder in folders:
+        for the_file in os.listdir(folder):
+            file_path = os.path.join(folder, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(e)
+
+    # Add back the blank dir lists
+    for site in sites:
+        os.system("touch {dir}dir.list".format(dir=args.deploy_dir + site + "/"))
+
+    # Mark the databases as unprocessed/unmunged
+    warn_cur.execute("UPDATE warnings_raw SET processed = 0")
+    warn_con.commit()
+    rad_cur.execute("UPDATE scans SET munged = 0")
+    rad_con.commit()
+
+    print("Chase case reset.")
+
+else:
+    print("Canceled...")

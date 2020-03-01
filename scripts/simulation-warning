@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+# Copyright (c) 2020 MesoSim Developers.
+# Distributed under the terms of the Apache 2.0 License.
+# SPDX-License-Identifier: Apache-2.0
+"""
+Simulation Looper - Warnings
+----------------------------
+
+This script handles warning deployment during the simulation.
+"""
+
+# Imports
+import argparse
+import time
+from datetime import datetime
+from sqlite3 import dbapi2 as sql
+
+import pytz
+from dateutil import parser as dateparser
+from mesosim.core.config import Config
+from mesosim.core.timing import arc_time_from_cur, cur_time_from_arc, std_fmt
+from mesosim.warning import process_warning_text
+
+# Set up script configuration
+parser = argparse.ArgumentParser(
+    description="Simulation looper for Level II Radar files.", usage=argparse.SUPPRESS
+)
+
+parser.add_argument(
+    "-W",
+    "--warning-dir",
+    help="<Required> Warning (web) directory",
+    required=True,
+    metavar="/var/www/warnings/",
+)
+parser.add_argument(
+    "-w",
+    "--warning-db",
+    help="Warning database file",
+    default="warning.db",
+    metavar="warning.db",
+)
+parser.add_argument(
+    "-c",
+    "--config-db",
+    help="Config/control database file",
+    default="config.db",
+    metavar="config.db",
+)
+parser.add_argument(
+    "--min-sleep", help="Minimum wait between loops", type=int, default=10, metavar="t"
+)
+
+try:
+    args = parser.parse_args()
+except SystemExit:
+    parser.print_help()
+    raise
+
+# Establish DB connection
+warn_con = sql.connect(args.warning_db)
+warn_cur = warn_con.cursor()
+
+# Get the master settings
+config = Config(args.config_db)
+
+if config.simulation_running:
+
+    # Report Status
+    print("\nSimulation Looper - Warnings\n----------------------------\n")
+    print("Archive Start Time: {}".format(config.timings["arc_start_time"]))
+    print("Current Start Time: {}".format(config.timings["cur_start_time"]))
+    print("Speed Factor: {}\n\n\n".format(config.speed_factor))
+
+    running = True
+    while running:
+
+        # Check if still running
+        if not config.simulation_running:
+            running = False
+            continue
+
+        # Do processing
+
+        # Get the now times
+        cur_now = datetime.now(tz=pytz.UTC)
+        arc_now = arc_time_from_cur(cur_now, config.timings)
+
+        # Check if any warnings to release
+        warn_cur.execute(
+            "SELECT * FROM warnings_raw WHERE valid <= ? AND "
+            + "(processed = 0 OR processed IS NULL)",
+            [arc_now.strftime(std_fmt)],
+        )
+        warnings_to_release = warn_cur.fetchall()
+
+        if len(warnings_to_release) > 0:
+
+            print(
+                "Processing {} warning(s) for {}...".format(
+                    len(warnings_to_release), cur_now.strftime(std_fmt)
+                )
+            )
+
+            # Loop over the warnings
+            for warning_row in warnings_to_release:
+
+                # Release the warning!
+
+                # First, process the text
+                warning = warning_row[1]
+                warning, warning_cur_time = process_warning_text(
+                    warning, timings=config.timings
+                )
+
+                # Then, determine the proper warning txt file, and append this
+                # warning
+                warning_file = args.warning_dir + warning_cur_time.strftime(
+                    "warnings_%Y%m%d_%H.txt"
+                )
+                with open(warning_file, "a") as f:
+                    f.write(warning)
+
+                # Finally, log it as processed
+                warn_cur.execute(
+                    "UPDATE warnings_raw SET processed = 1 WHERE text = ?", [warning_row[1]]
+                )
+                warn_con.commit()
+
+            print("\tWarnings processed.")
+
+        else:
+            print("No warnings to release for {}.".format(cur_now.strftime(std_fmt)))
+
+        # Find the next warning to release
+        warn_cur.execute(
+            "SELECT * FROM warnings_raw WHERE "
+            + "(processed = 0 OR processed IS NULL) ORDER BY valid ASC LIMIT 1"
+        )
+        warnings_in_waiting = warn_cur.fetchall()
+
+        if len(warnings_in_waiting) > 0:
+
+            # We have a next warning, sleep until it comes
+            arc_next = dateparser.parse(warnings_in_waiting[0][0])
+            cur_next = cur_time_from_arc(arc_next, config.timings)
+
+            print("\tNext warning incoming at {}...".format(cur_next.strftime(std_fmt)))
+
+            sleep = (cur_next - datetime.now(tz=pytz.UTC)).seconds + 1
+            if sleep < args.min_sleep:
+                sleep = args.min_sleep  # Don't need to be going too rapid fire...
+            time.sleep(sleep)
+
+        else:
+
+            # No more warnings! We're done!
+            running = False
+
+    print("\n\n\nWarnings for simulation completed.\nHope it was fun!\n")
+else:
+    print(
+        "\nSimulation not currently running.\n" + "Please rerun once simulation is started.\n"
+    )
