@@ -173,6 +173,13 @@ if __name__ == '__main__':
         default=0,
         metavar="0"
     )
+    parser.add_argument(
+        "--check-remote",
+        help="Set to 1 if we should regularly ping the main API to see if the simulation is still running (must be 0 to run independently",
+        type=int,
+        default=1,
+        metavar="1"
+    )
 
     ####################
     # Parsed Arguments #
@@ -405,7 +412,7 @@ if __name__ == '__main__':
 
         # Check occasionally if still running via API (i.e., allowed for delayed remote kill)
         if cur_now - previous_api_check > timedelta(seconds=60):
-            if not check_running(api_base):
+            if args.check_remote and not check_running(args.api_base):
                 print("Simulation terminated on remote API...terminating here as well...")
                 running = False
                 break
