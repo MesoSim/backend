@@ -382,19 +382,20 @@ if __name__ == '__main__':
     } 
 
     # Trigger start on API
-    r = requests.put(
-        args.api_base + "/simulation/timings",
-        data={
-            "auth": admin_passcode,
-            "simulation_running": 1,
-            **timings
-        }
-    )
+    if args.check_remote:
+        r = requests.put(
+            args.api_base + "/simulation/timings",
+            data={
+                "auth": admin_passcode,
+                "simulation_running": 1,
+                **timings
+            }
+        )
 
-    # Fail out if error on simulation start
-    if r.status_code >= 400:
-        print(f"FATAL ERROR: API responded with code {r.status_code}...aborting simulation...")
-        print(r.text)
+        # Fail out if error on simulation start
+        if r.status_code >= 400:
+            print(f"FATAL ERROR: API responded with code {r.status_code}...aborting simulation...")
+            print(r.text)
 
     # Start the big loop.
     print("INITIATE SIMULATION LOOP!")
