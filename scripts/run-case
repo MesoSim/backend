@@ -330,7 +330,7 @@ if __name__ == '__main__':
                     key = obj['Key'] 
                     match = l2_datetime_pattern.search(key)
                     if match:
-                        file_time = pd.Timestamp("{Y}-{m}-{d}T{H}:{M}:{S}".format(**match.groupdict()))
+                        file_time = pd.Timestamp("{Y}-{m}-{d}T{H}:{M}:{S}Z".format(**match.groupdict()))
                         if arc_start_time <= file_time <= arc_end_time:
                             nexrad_remote_files.append((radar_id, file_time, key))
             except KeyError:
