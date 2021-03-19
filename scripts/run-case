@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
             # Find the valid time
             match = re.search(
-                r"(?P<timestamp>[0-9]{6}[0-9]{4}Z)",
+                r"(?P<timestamp>[0-9]{6}T[0-9]{4}Z)",
                 warning,
             )
             valid = dateparser.parse(match.group("timestamp"), yearfirst=True).strftime(std_fmt)
