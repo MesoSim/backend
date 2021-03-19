@@ -547,7 +547,7 @@ if __name__ == '__main__':
                     munge_cmd = proper_dir + "../munge/l2munger {} {} {} {}".format(
                         site,
                         dateparser.parse(cur_scan_time).strftime("%Y/%m/%d %H:%M:%S"),
-                        config.speed_factor,
+                        speed_factor,
                         arc_file,
                     )
                     list_cmd = (
