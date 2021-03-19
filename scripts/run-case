@@ -544,7 +544,7 @@ if __name__ == '__main__':
                         os.makedirs(site_deploy_dir)
 
                     # Munge and move
-                    munge_cmd = proper_dir + "../munge/l2munger {} {} {} {}".format(
+                    munge_cmd = proper_dir + "/../munge/l2munger {} {} {} {}".format(
                         site,
                         dateparser.parse(cur_scan_time).strftime("%Y/%m/%d %H:%M:%S"),
                         speed_factor,
