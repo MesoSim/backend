@@ -338,8 +338,8 @@ if __name__ == '__main__':
                 continue
         radar_table = pd.DataFrame.from_records(
             nexrad_remote_files,
-            columns=('site_id', 'scan_time', 'file_key')
-        ).sort_values('scan_time')
+            columns=('site_id', 'arc_time', 'file_key')
+        ).sort_values('arc_time')
     else:
         handle_radar = False
         print("No radar sites provided...skipping...")
@@ -513,7 +513,7 @@ if __name__ == '__main__':
 
                     # Get scan vars
                     site = scan_row['site_id']
-                    arc_scan_time = scan_row['scan_time']
+                    arc_scan_time = scan_row['arc_time']
                     cur_scan_time = cur_time_from_arc(arc_scan_time, timings)
                     file_key = scan_row['file_key']
                     downloaded_l2 = file_key.split("/")[-1]
