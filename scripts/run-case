@@ -263,7 +263,7 @@ if __name__ == '__main__':
                 warnings += [record["data"] for record in r.json()["results"]]
 
         # And let's just add the record close character so we don't have to later
-        warnings = ["\x01" + s[s.find('\n')+1:s.rfind('\n')] + "\x03" for s in warnings]
+        warnings = ["\x01\n" + s[s.find('\n')+1:s.rfind('\n')] + "\n\x03" for s in warnings]
 
         # Make the warning database
         print("\tAccessing local database...")
