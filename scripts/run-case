@@ -278,6 +278,9 @@ if __name__ == '__main__':
         query = "INSERT INTO warnings_raw (valid, text) VALUES (?,?)"
         for warning in warnings:
 
+            # DEBUG!!
+            print(warning)
+
             # Find the valid time
             match = re.search(
                 (
