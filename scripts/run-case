@@ -36,6 +36,7 @@ import shutil
 from sqlite3 import dbapi2 as sql
 import struct
 import subprocess
+import time
 
 import boto3
 from mesosim.core.timing import arc_time_from_cur, cur_time_from_arc, std_fmt
