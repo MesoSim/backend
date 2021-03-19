@@ -29,6 +29,7 @@ import bz2
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 import getpass
+from itertools import product
 import os
 import re
 import shutil
