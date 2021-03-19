@@ -514,7 +514,7 @@ if __name__ == '__main__':
 
                     # Get scan vars
                     site = scan_row['site_id']
-                    arc_scan_time = scan_row['arc_time']
+                    arc_scan_time = scan_row['arc_time'].strftime(std_fmt)
                     cur_scan_time = cur_time_from_arc(arc_scan_time, timings)
                     file_key = scan_row['file_key']
                     downloaded_l2 = file_key.split("/")[-1]
