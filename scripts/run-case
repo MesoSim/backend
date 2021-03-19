@@ -336,7 +336,7 @@ if __name__ == '__main__':
             except KeyError:
                 # None found!
                 continue
-        nexrad_table = pd.from_records(
+        nexrad_table = pd.DataFrame.from_records(
             nexrad_remote_files,
             columns=('site_id', 'scan_time', 'file_key')
         ).sort_value('scan_time')
