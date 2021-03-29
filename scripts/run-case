@@ -218,7 +218,7 @@ if __name__ == '__main__':
                 "auth": admin_passcode,
                 "start": arc_start_time.strftime("%Y%m%d%H%M"),
                 "end": arc_end_time.strftime("%Y%m%d%H%M"),
-                "wfos": ",".join(wfos),
+                "wfos": ",".join(args.lsr_wfos),
             }
         )
 
