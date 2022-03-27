@@ -7,7 +7,7 @@ Reset the chase simulation backend
 ----------------------------------
 
 Clear timing from control DB, clear the output warning and radar folders,
-and reset warning.db and radar.db to be unprocessed.
+and reset warnings.db to be unprocessed.
 """
 
 # Imports
@@ -25,31 +25,28 @@ parser.add_argument(
     "--deploy-dir",
     help="<Required> Deployment (web) directory",
     required=True,
-    metavar="/var/www/l2data/",
+    metavar="/data/public_html/l2/",
 )
 parser.add_argument(
     "-W",
     "--warning-dir",
     help="<Required> Warning (web) directory",
     required=True,
-    metavar="/var/www/warnings/",
-)
-parser.add_argument(
-    "-r", "--radar-db", help="Radar database file", default="radar.db", metavar="radar.db"
+    metavar="/data/public_html/warnings/",
 )
 parser.add_argument(
     "-w",
     "--warning-db",
     help="Warning database file",
-    default="warning.db",
-    metavar="warning.db",
+    default="/data/warnings.db",
+    metavar="/data/warnings.db",
 )
 parser.add_argument(
     "-c",
     "--config-db",
     help="Config/control database file",
-    default="config.db",
-    metavar="config.db",
+    default="/data/main.db",
+    metavar="/data/main.db",
 )
 
 try:
@@ -64,13 +61,7 @@ print("\nRESET!\n------\n")
 # Establish DB connection
 warn_con = sql.connect(args.warning_db)
 warn_cur = warn_con.cursor()
-rad_con = sql.connect(args.radar_db)
-rad_cur = rad_con.cursor()
 config = Config(args.config_db)
-
-# Get sites
-rad_cur.execute("SELECT site from scans GROUP BY site")
-sites = [site[0] for site in rad_cur.fetchall()]
 
 # Confirm
 confirm = input("[Y]es/[N]o: ")
@@ -108,9 +99,7 @@ if confirm[0] in ["Y", "y"]:
     # Mark the databases as unprocessed/unmunged
     warn_cur.execute("UPDATE warnings_raw SET processed = 0")
     warn_con.commit()
-    rad_cur.execute("UPDATE scans SET munged = 0")
-    rad_con.commit()
-
+    
     print("Chase case reset.")
 
 else:
