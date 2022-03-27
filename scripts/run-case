@@ -138,14 +138,14 @@ if __name__ == '__main__':
         "-A",
         "--api-base",
         help="API Base URL",
-        metavar="https://chase.iawx.info/api",
-        default="https://chase.iawx.info/api"
+        metavar="http://0.0.0.0/api",
+        default="http://0.0.0.0/api"
     )
     parser.add_argument(
         "--warning-db",
         help="Warning DB (will be created if not exists)",
-        default="/home/jthielen/warnings.db",
-        metavar="/home/jthielen/warnings.db"
+        default="/data/warnings.db",
+        metavar="/data/warnings.db"
     )
     parser.add_argument(
         "-w",
