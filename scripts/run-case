@@ -179,6 +179,13 @@ if __name__ == '__main__':
         "--check-remote",
         help="Set to 1 if we should regularly ping the main API to see if the simulation is still running (must be 0 to run independently",
         type=int,
+        default=0,
+        metavar="0"
+    )
+    parser.add_argument(
+        "--set-timings",
+        help="Set to 1 if we should update the simulation timings on the main API on start, if otherwise check remote is 0",
+        type=int,
         default=1,
         metavar="1"
     )
@@ -387,7 +394,7 @@ if __name__ == '__main__':
     } 
 
     # Trigger start on API
-    if args.check_remote:
+    if args.check_remote or args.set_timings:
         r = requests.put(
             args.api_base + "/simulation/timings",
             data={
